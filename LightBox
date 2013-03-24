@@ -1,0 +1,9 @@
+from Vector import Vector
+
+class LightBox:
+
+    def __init__(self, x, y, width, height, depth):
+        self.width  = width
+        self.height = height
+        self.depth  = depth
+        self.center = Vector(x, y, 0)

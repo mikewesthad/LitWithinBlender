@@ -1,7 +1,8 @@
+import bpy
+
 import sys
 sys.path.append("C:\\Users\\mikewesthad\\Documents\\Git Projects\\LitWithinBlender")
 import NeuralNetwork
-
 import imp
 imp.reload(NeuralNetwork)
         

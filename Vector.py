@@ -43,7 +43,7 @@ class Vector:
         / (division by a scaler)
     """
     def __add__(v1, v2):
-        if not(isinstance(v2, Vector)):
+        if (type(v2) is int) or (type(v2) is float):
             v2 = Vector(v2, v2, v2)
         v3 = Vector()
         v3.x = v1.x + v2.x
@@ -52,7 +52,7 @@ class Vector:
         return v3
 
     def __sub__(v1, v2):
-        if not(isinstance(v2, Vector)):
+        if (type(v2) is int) or (type(v2) is float):
             v2 = Vector(v2, v2, v2)
         v3 = Vector()
         v3.x = v1.x - v2.x
@@ -61,16 +61,7 @@ class Vector:
         return v3
     
     def __mul__(v1, v2):
-        if not(isinstance(v2, Vector)):
-            v2 = Vector(v2, v2, v2)
-        v3 = Vector()
-        v3.x = v1.x * v2.x
-        v3.y = v1.y * v2.y
-        v3.z = v1.z * v2.z
-        return v3
-
-    def __mul__(v1, v2):
-        if not(isinstance(v2, Vector)):
+        if (type(v2) is int) or (type(v2) is float):
             v2 = Vector(v2, v2, v2)
         v3 = Vector()
         v3.x = v1.x * v2.x

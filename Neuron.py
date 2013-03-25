@@ -1,12 +1,17 @@
 import math as m
 import random as r
+import imp
+
+import Vector
+imp.reload(Vector)
 from Vector import Vector
 
 class Neuron:
     def __init__(self, x, y, network):
         self.alive      = True
         self.center     = Vector(x, y, 0.0)
-        self.network    = network
+        self.verts      = []
+        self.faces      = []
         
         self.somaSize           = 0.5
         self.maxRadius          = 10.0
@@ -17,9 +22,9 @@ class Neuron:
         self.dendriteThickness  = 0.1
         self.dendrites          = []
         self.stepDist           = 0.5
-
+        
         self.clockwiseOrder = False
-
+        
         self.createSoma()
         self.createDendrites()
 
@@ -27,30 +32,30 @@ class Neuron:
     def createSoma(self):
         samples = 30.0
         angle   = 360.0/samples
-        verts   = []
-        faces   = []
-
         # Add center vertex
-        verts.append(self.center.toList())
+        self.verts.append(self.center.toList())
 
         # Add a ring of vertices
         a = 0.0
         while a<360.0:
             x = m.cos(m.radians(a)) * self.somaSize + self.center.x
             y = m.sin(m.radians(a)) * self.somaSize + self.center.y
-            verts.append([x,y,0.0])
+            self.verts.append([x,y,0.0])
             a += angle
 
         # Build the faces (triangles fanning out from the center)
         i = 1
         while i < samples:
-            if self.clockwiseOrder: faces.append([i, 0, i+1])
-            else: faces.append([i+1, 0, i])
+            if self.clockwiseOrder:
+                self.faces.append([i, 0, i+1])
+            else:
+                self.faces.append([i+1, 0, i])
             i += 1
-        if self.clockwiseOrder: faces.append([i, 0, 1])
-        else: faces.append([1, 0, i])
+        if self.clockwiseOrder:
+            self.faces.append([i, 0, 1])
+        else:
+            self.faces.append([1, 0, i])
 
-        self.network.register(verts, faces)
 
 
     def createDendrites(self):
@@ -58,9 +63,7 @@ class Neuron:
         startDist       = 0.95 * self.somaSize
         endDist         = startDist + self.stepDist
         halfThickness   = self.dendriteThickness/2.0
-
-        verts = []
-        faces = []
+        
         a = 0.0
         while a<360.0:
             # Define the points that the dendrite would follow if it were a line (i.e. no thickness) 
@@ -84,30 +87,38 @@ class Neuron:
             v2 = leftPerp * halfThickness + p2
             v3 = rightPerp * halfThickness + p2
 
-            startVertexNumber = len(verts)
-            face = self.createOrderedQuad(v1, v2, v3, v4, startVertexNumber)
-            faces.append(face)
-            verts = verts + [v1.toList(), v2.toList(), v3.toList(), v4.toList()]
-            
-            self.dendrites.append([[a,p1,v1,v4], [a,p2,v2,v3]])
+            # Find the vertex index of the newly added vertices
+            startVertexNumber = len(self.verts)
+            v1Number = startVertexNumber
+            v2Number = startVertexNumber + 1
+            v3Number = startVertexNumber + 2
+            v4Number = startVertexNumber + 3
+
+            # Add the vertices
+            self.verts = self.verts + [v1.toList(), v2.toList(), v3.toList(), v4.toList()]
+
+            # Add a properly ordered face
+            face = self.createOrderedQuad(v1, v2, v3, v4, v1Number, v2Number, v3Number, v4Number)
+            self.faces.append(face)
+
+            # Store some information about the current dendrite branch
+            self.dendrites.append([[a,p1,[v1,v1Number],[v4,v4Number]],
+                                   [a,p2,[v2,v2Number],[v3,v3Number]]])
             a += angle
             
-        self.network.register(verts, faces)
 
     def growDendrites(self):
         step            = self.stepDist
         halfThickness   = self.dendriteThickness/2.0
 
-        verts = []
-        faces = []
         for i in range(len(self.dendrites)):
             dendrite = self.dendrites[i]                
 
             # Start at the last quad's ending point and vertices
-            heading = dendrite[-1][0]
-            p1      = dendrite[-1][1]
-            v1      = dendrite[-1][2]
-            v4      = dendrite[-1][3]
+            heading         = dendrite[-1][0]
+            p1              = dendrite[-1][1]
+            v1, v1Number    = dendrite[-1][2]
+            v4, v4Number    = dendrite[-1][3]
 
             # Generate a random heading in order to create p2
             heading += r.uniform(-45, 45)
@@ -121,18 +132,24 @@ class Neuron:
             rightPerp   = t.rightXYPerpendicular().normalize()
             v2 = leftPerp * halfThickness + p2
             v3 = rightPerp * halfThickness + p2
+            
+            # Find the vertex index of the newly added vertices
+            startVertexNumber = len(self.verts)
+            v2Number = startVertexNumber
+            v3Number = startVertexNumber + 1
+            
+            # Add the vertices
+            self.verts = self.verts + [v2.toList(), v3.toList()]
+            
+            # Add a properly ordered face
+            face = self.createOrderedQuad(v1, v2, v3, v4, v1Number, v2Number, v3Number, v4Number)
+            self.faces.append(face)
 
-            startVertexNumber = len(verts)
-            face = self.createOrderedQuad(v1, v2, v3, v4, startVertexNumber)
-            faces.append(face)
-            verts = verts + [v1.toList(), v2.toList(), v3.toList(), v4.toList()]
-            
-            self.dendrites[i].append([heading,p2,v2,v3])
-            
-        self.network.register(verts, faces)
+            # Store some information about the current dendrite branch
+            self.dendrites[i].append([heading,p2,[v2,v2Number],[v3,v3Number]])
         
 
-    def createOrderedQuad(self, v1, v2, v3, v4, startVertexNumber):
+    def createOrderedQuad(self, v1, v2, v3, v4, v1Number, v2Number, v3Number, v4Number):
         center = (v1+v2+v3+v4)*.25 
 
         v1 = v1 - center
@@ -145,10 +162,10 @@ class Neuron:
         a3 = m.atan2(v3.y, v3.x) + m.pi
         a4 = m.atan2(v4.y, v4.x) + m.pi
 
-        lst = [[startVertexNumber+0, a1],
-               [startVertexNumber+1, a2],
-               [startVertexNumber+2, a3],
-               [startVertexNumber+3, a4]]
+        lst = [[v1Number, a1],
+               [v2Number, a2],
+               [v3Number, a3],
+               [v4Number, a4]]
         
         sortedLst = sorted(lst, key=lambda element: element[1], reverse=self.clockwiseOrder)
         face = [sortedLst[0][0],

@@ -1,8 +1,22 @@
 import bpy
-from Neuron import Neuron
-from Vector import Vector
-from LightBox import LightBox
 import random as r
+import imp
+
+import LightBox
+imp.reload(LightBox)
+from LightBox import LightBox
+
+import Neuron
+imp.reload(Neuron)
+from Neuron import Neuron
+
+import Vector
+imp.reload(Vector)
+from Vector import Vector
+
+
+
+
 
 class Network:
     def __init__(self, width, height, depth, numberCells):        
@@ -27,20 +41,17 @@ class Network:
         for c in self.cells: c.growDendrites()
 
     def buildNetwork(self):
-        self.buildMesh("Network", self.position.toList(), self.verts, self.faces)
+        for i in range(len(self.cells)):
+            cell = self.cells[i]
+            name = "Neuron "+str(i)
+            verts = cell.verts
+            faces = cell.faces
+            self.buildMesh(name, verts, faces)
         
-    def register(self, newVerts, newFaces):
-        offset = len(self.verts)
-        for f in range(len(newFaces)):
-            for i in range(len(newFaces[f])): 
-                newFaces[f][i] += offset
-            self.faces.append(newFaces[f][:])
-        self.verts = self.verts + newVerts
-        
-    def buildMesh(self, name, position, verts, faces):
+    def buildMesh(self, name, verts, faces):
         mesh = bpy.data.meshes.new(name)
         obj = bpy.data.objects.new(name, mesh)
-        obj.location = position
+        obj.location = self.position.toList()
         bpy.context.scene.objects.link(obj)
         mesh.from_pydata(verts,[],faces)
         mesh.update(calc_edges=True)

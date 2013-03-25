@@ -8,5 +8,14 @@ import NeuralNetwork
 imp.reload(NeuralNetwork)
 import NeuralNetwork
 
-n = NeuralNetwork.Network(1, 1, 1, 1)
+
+numberCells = 1
+
+micronsPerBlenderUnit = 1000.0
+
+boxWidth    = 1000.0
+boxHeight   = 1000.0
+boxDepth    = 1000.0
+
+n = NeuralNetwork.Network(boxWidth, boxHeight, boxDepth, micronsPerBlenderUnit, numberCells)
 n.buildNetwork()

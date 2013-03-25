@@ -19,7 +19,7 @@ from Vector import Vector
 
 
 class Network:
-    def __init__(self, width, height, depth, numberCells):        
+    def __init__(self, width, height, depth, micronsPerUnit, numberCells):        
         self.cells = []
         self.verts = []
         self.faces = []
@@ -29,13 +29,14 @@ class Network:
         self.position   = Vector(pos[0], pos[1], pos[2])
             
         # Create a light box
-        self.lightBox = LightBox(self.position, width, height, depth)  
+        w = width/micronsPerUnit
+        h = height/micronsPerUnit
+        d = depth/micronsPerUnit
+        self.lightBox = LightBox(self.position, w, h, d)  
 
         # Create a set of cells
         for i in range(numberCells):
-            self.cells.append(Neuron(r.uniform(-width/2.0,width/2.0),
-                                     r.uniform(-height/2.0,height/2.0),
-                                     self))
+            self.cells.append(Neuron(0,0,micronsPerUnit))
             
 
     def buildNetwork(self):

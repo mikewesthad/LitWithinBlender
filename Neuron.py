@@ -7,21 +7,23 @@ imp.reload(Vector)
 from Vector import Vector
 
 class Neuron:
-    def __init__(self, x, y, network):
+    def __init__(self, x, y, micronsPerUnit):
         self.growing    = True
         self.center     = Vector(x, y, 0.0)
         self.verts      = []
         self.faces      = []
-        
-        self.somaSize           = 0.5
-        self.maxRadius          = 10.0
+
+        self.micronsPerUnit     = micronsPerUnit
+        self.somaSize           = 10.0/micronsPerUnit
+        self.maxRadius          = 300.0/micronsPerUnit
         self.currentRadius      = 0.0
-        self.farthestVertex     = [x, y]
+        self.farthestVertex     = self.center
         
         self.branches           = 10
-        self.dendriteThickness  = 0.1
+        self.dendriteThickness  = 2.0/micronsPerUnit
+        self.minDendriteThickness  = 0.5/micronsPerUnit
         self.dendrites          = []
-        self.stepDist           = 0.5
+        self.stepDist           = 10.0/micronsPerUnit
         
         self.clockwiseOrder = False
         
@@ -107,6 +109,7 @@ class Neuron:
             # Store some information about the current dendrite branch
             self.dendrites.append([[a,initialResources,p1,[v1,v1Number],[v4,v4Number]],
                                    [a,remainingResources,p2,[v2,v2Number],[v3,v3Number]]])
+            self.updateRadius(v1, v2, v3, v4)
             a += angle
             
 
@@ -132,6 +135,9 @@ class Neuron:
         p1              = dendrite[-1][2]
         v1, v1Number    = dendrite[-1][3]
         v4, v4Number    = dendrite[-1][4]
+
+        thickness = resources/self.maxRadius * (self.dendriteThickness - self.minDendriteThickness) + self.minDendriteThickness
+        halfThickness = thickness / 2.0
 
         # Generate a random heading in order to create p2
         heading += r.uniform(-45, 45)
@@ -161,6 +167,7 @@ class Neuron:
 
         # Store some information about the current dendrite branch
         self.dendrites[i].append([heading, resources, p2, [v2,v2Number], [v3,v3Number]])
+        self.updateRadius(v1, v2, v3, v4)
 
         
 
@@ -191,7 +198,13 @@ class Neuron:
                 sortedLst[3][0]]
         
         return face
-        
 
+    def updateRadius(self, v1, v2, v3, v4):
+        for v in [v1, v2, v3, v4]:
+            d = self.center.distance(v)
+            if d>self.currentRadius:
+                self.currentRadius = d
+                self.farthestVertex = v
+    
     def createVertexListFromVectors(self, v1, v2, v3, v4):
         return [v1.toList(), v2.toList(), v3.toList(), v4.toList()]

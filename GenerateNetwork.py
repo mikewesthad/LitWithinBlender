@@ -9,6 +9,4 @@ imp.reload(NeuralNetwork)
 import NeuralNetwork
 
 n = NeuralNetwork.Network(1, 1, 1, 1)
-for i in range(5):
-    n.update()
 n.buildNetwork()

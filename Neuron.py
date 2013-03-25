@@ -8,7 +8,7 @@ from Vector import Vector
 
 class Neuron:
     def __init__(self, x, y, network):
-        self.alive      = True
+        self.growing    = True
         self.center     = Vector(x, y, 0.0)
         self.verts      = []
         self.faces      = []
@@ -66,12 +66,15 @@ class Neuron:
         
         a = 0.0
         while a<360.0:
-            # Define the points that the dendrite would follow if it were a line (i.e. no thickness) 
+            
+            # Define the points that the dendrite would follow if it were a line (i.e. no thickness)
+            initialResources = self.maxRadius 
             p1, p2 = Vector(), Vector()
             p1.x = m.cos(m.radians(a)) * startDist + self.center.x
             p1.y = m.sin(m.radians(a)) * startDist + self.center.y
             p2.x = m.cos(m.radians(a)) * endDist + self.center.x
             p2.y = m.sin(m.radians(a)) * endDist + self.center.y
+            remainingResources = initialResources - p1.distance(p2)
 
             # Find the first and last vertex of the quad (moving perpendicular from p1 to create thickness)
             t = p1 - self.center
@@ -102,53 +105,67 @@ class Neuron:
             self.faces.append(face)
 
             # Store some information about the current dendrite branch
-            self.dendrites.append([[a,p1,[v1,v1Number],[v4,v4Number]],
-                                   [a,p2,[v2,v2Number],[v3,v3Number]]])
+            self.dendrites.append([[a,initialResources,p1,[v1,v1Number],[v4,v4Number]],
+                                   [a,remainingResources,p2,[v2,v2Number],[v3,v3Number]]])
             a += angle
             
 
     def growDendrites(self):
+        finishedGrowing = True
+        for i in range(len(self.dendrites)):
+            dendrite = self.dendrites[i]
+            resources = dendrite[-1][1]
+            if resources > 0:
+                self.growDendrite(i)
+                finishedGrowing = False
+        if finishedGrowing: self.growing = False
+
+
+    def growDendrite(self, i):
+        dendrite        = self.dendrites[i]
         step            = self.stepDist
         halfThickness   = self.dendriteThickness/2.0
 
-        for i in range(len(self.dendrites)):
-            dendrite = self.dendrites[i]                
+        # Load this dendrite's information
+        heading         = dendrite[-1][0]
+        resources       = dendrite[-1][1]
+        p1              = dendrite[-1][2]
+        v1, v1Number    = dendrite[-1][3]
+        v4, v4Number    = dendrite[-1][4]
 
-            # Start at the last quad's ending point and vertices
-            heading         = dendrite[-1][0]
-            p1              = dendrite[-1][1]
-            v1, v1Number    = dendrite[-1][2]
-            v4, v4Number    = dendrite[-1][3]
+        # Generate a random heading in order to create p2
+        heading += r.uniform(-45, 45)
+        p2      = Vector()
+        p2.x    = p1.x + m.cos(m.radians(heading)) * step
+        p2.y    = p1.y + m.sin(m.radians(heading)) * step
+        resources = resources - p1.distance(p2)
 
-            # Generate a random heading in order to create p2
-            heading += r.uniform(-45, 45)
-            p2      = Vector()
-            p2.x    = p1.x + m.cos(m.radians(heading)) * step
-            p2.y    = p1.y + m.sin(m.radians(heading)) * step
+        # Calculate the new vertices of the quad (adding thickness)
+        t = p2 - p1
+        leftPerp    = t.leftXYPerpendicular().normalize()
+        rightPerp   = t.rightXYPerpendicular().normalize()
+        v2 = leftPerp * halfThickness + p2
+        v3 = rightPerp * halfThickness + p2
+        
+        # Find the vertex index of the newly added vertices
+        startVertexNumber = len(self.verts)
+        v2Number = startVertexNumber
+        v3Number = startVertexNumber + 1
+        
+        # Add the vertices
+        self.verts = self.verts + [v2.toList(), v3.toList()]
+        
+        # Add a properly ordered face
+        face = self.createOrderedQuad(v1, v2, v3, v4, v1Number, v2Number, v3Number, v4Number)
+        self.faces.append(face)
 
-            # Calculate the new vertices of the quad (adding thickness)
-            t = p2 - p1
-            leftPerp    = t.leftXYPerpendicular().normalize()
-            rightPerp   = t.rightXYPerpendicular().normalize()
-            v2 = leftPerp * halfThickness + p2
-            v3 = rightPerp * halfThickness + p2
-            
-            # Find the vertex index of the newly added vertices
-            startVertexNumber = len(self.verts)
-            v2Number = startVertexNumber
-            v3Number = startVertexNumber + 1
-            
-            # Add the vertices
-            self.verts = self.verts + [v2.toList(), v3.toList()]
-            
-            # Add a properly ordered face
-            face = self.createOrderedQuad(v1, v2, v3, v4, v1Number, v2Number, v3Number, v4Number)
-            self.faces.append(face)
+        # Store some information about the current dendrite branch
+        self.dendrites[i].append([heading, resources, p2, [v2,v2Number], [v3,v3Number]])
 
-            # Store some information about the current dendrite branch
-            self.dendrites[i].append([heading,p2,[v2,v2Number],[v3,v3Number]])
         
 
+
+            
     def createOrderedQuad(self, v1, v2, v3, v4, v1Number, v2Number, v3Number, v4Number):
         center = (v1+v2+v3+v4)*.25 
 

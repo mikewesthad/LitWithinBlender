@@ -37,10 +37,16 @@ class Network:
                                      r.uniform(-height/2.0,height/2.0),
                                      self))
             
-    def update(self):
-        for c in self.cells: c.growDendrites()
 
     def buildNetwork(self):
+
+        cellsDoneGrowing = False
+        while not(cellsDoneGrowing):
+            cellsDoneGrowing = True
+            for c in self.cells:
+                if c.growing:
+                    c.growDendrites()
+                    cellsDoneGrowing = False
         for i in range(len(self.cells)):
             cell = self.cells[i]
             name = "Neuron "+str(i)

@@ -6,16 +6,17 @@ sys.path.append("C:\\Users\\mikewesthad\\Documents\\Git Projects\\LitWithinBlend
 import imp
 import NeuralNetwork
 imp.reload(NeuralNetwork)
-import NeuralNetwork
+from NeuralNetwork import Network
+
+import Vector
+imp.reload(Vector)
+from Vector import Vector
 
 
-numberCells = 1
+numberCells             = 1
+micronsPerBlenderUnit   = 1000.0
+lightBoxDimensions      = Vector(1, 1, 1) * micronsPerBlenderUnit
 
-micronsPerBlenderUnit = 1000.0
 
-boxWidth    = 1000.0
-boxHeight   = 1000.0
-boxDepth    = 1000.0
-
-n = NeuralNetwork.Network(boxWidth, boxHeight, boxDepth, micronsPerBlenderUnit, numberCells)
+n = Network(lightBoxDimensions, micronsPerBlenderUnit, numberCells)
 n.buildNetwork()

@@ -1,5 +1,5 @@
 """
-LightBox is a cube object of width, height and depth located at (x, y, z) that
+LightBox is a cube object of width, height and depth (in microns) located at (x, y, z) that
 contains a point source lamp object at its center
 
 It's class variables include:
@@ -18,15 +18,16 @@ It's class variables include:
 import bpy
 
 class LightBox:
-    def __init__(self, position, width, height, depth):
+    def __init__(self, position, lightboxDimensions, micronsPerBlenderUnit):
         
-        self.width  = width
-        self.height = height
-        self.depth  = depth
-        self.center = position
+        self.dimensionsInMicrons    = lightboxDimensions
+        self.dimensionsInBlender    = lightboxDimensions * (1.0/micronsPerBlenderUnit)
+        self.center                 = position * (1.0/micronsPerBlenderUnit)
         
         verts, faces = [], []
-        halfw, halfh, halfd = width/2.0, height/2.0, depth/2.0
+        halfw = self.dimensionsInBlender.x/2.0
+        halfh = self.dimensionsInBlender.y/2.0 
+        halfd = self.dimensionsInBlender.z/2.0
         
         verts.append([+halfw, +halfh, -halfd]) 
         verts.append([+halfw, -halfh, -halfd]) 

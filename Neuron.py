@@ -7,23 +7,27 @@ imp.reload(Vector)
 from Vector import Vector
 
 class Neuron:
-    def __init__(self, x, y, micronsPerUnit):
+    def __init__(self, position, micronsPerUnit):
         self.growing    = True
-        self.center     = Vector(x, y, 0.0)
+        self.center     = position
         self.verts      = []
         self.faces      = []
 
         self.micronsPerUnit     = micronsPerUnit
         self.somaSize           = 10.0/micronsPerUnit
-        self.maxRadius          = 300.0/micronsPerUnit
+        self.maxRadius          = 600.0/micronsPerUnit
         self.currentRadius      = 0.0
         self.farthestVertex     = self.center
-        
-        self.branches           = 10
-        self.dendriteThickness  = 2.0/micronsPerUnit
-        self.minDendriteThickness  = 0.5/micronsPerUnit
-        self.dendrites          = []
-        self.stepDist           = 10.0/micronsPerUnit
+
+        self.branchSplitProbability = 0.0
+        self.branches               = 30
+        self.dendriteThickness      = 30.0/micronsPerUnit
+        self.minDendriteThickness   = 10.0/micronsPerUnit
+        self.dendrites              = []
+        self.stepDist               = 10.0/micronsPerUnit
+        self.headingRange           = 15
+
+        self.lineSegments = []
         
         self.clockwiseOrder = False
         
@@ -109,9 +113,36 @@ class Neuron:
             # Store some information about the current dendrite branch
             self.dendrites.append([[a,initialResources,p1,[v1,v1Number],[v4,v4Number]],
                                    [a,remainingResources,p2,[v2,v2Number],[v3,v3Number]]])
+            self.lineSegments.append([p1, (p1+p2)/2.0, p2])
             self.updateRadius(v1, v2, v3, v4)
             a += angle
+
+
+    def branchDendrites(self):
+        i = 0
+        numDendrites = len(self.dendrites)
+        while i < numDendrites:
+            if r.uniform(0.0, 1.0) < self.branchSplitProbability:
+                dendrite        = self.dendrites[i]
+                heading         = dendrite[-1][0]
+                resources       = dendrite[-1][1]
+                p1              = dendrite[-1][2]
+                v1, v1Number    = dendrite[-1][3]
+                v4, v4Number    = dendrite[-1][4]
+
+                if resources > 4*self.stepDist:
+
+                    del(self.dendrites[i])
+                    i-=1
+                    numDendrites-=1
+
+                    self.dendrites.append([[heading+self.headingRange,resources/2.0,p1,[v1,v1Number],[v4,v4Number]]])
+                    self.dendrites.append([[heading-self.headingRange,resources/2.0,p1,[v1,v1Number],[v4,v4Number]]])
+                
+            i+=1
+                                
             
+        
 
     def growDendrites(self):
         finishedGrowing = True
@@ -122,6 +153,8 @@ class Neuron:
                 self.growDendrite(i)
                 finishedGrowing = False
         if finishedGrowing: self.growing = False
+
+        self.branchDendrites()
 
 
     def growDendrite(self, i):
@@ -140,7 +173,7 @@ class Neuron:
         halfThickness = thickness / 2.0
 
         # Generate a random heading in order to create p2
-        heading += r.uniform(-45, 45)
+        heading += r.uniform(-self.headingRange, self.headingRange)
         p2      = Vector()
         p2.x    = p1.x + m.cos(m.radians(heading)) * step
         p2.y    = p1.y + m.sin(m.radians(heading)) * step
@@ -167,10 +200,19 @@ class Neuron:
 
         # Store some information about the current dendrite branch
         self.dendrites[i].append([heading, resources, p2, [v2,v2Number], [v3,v3Number]])
+        self.lineSegments.append([p1, (p1+p2)/2.0, p2])
         self.updateRadius(v1, v2, v3, v4)
 
         
+    def generateRandomHeading(position, heading, visualRange, headingRange):
 
+        for line in self.lineSegments:
+            p1, midp, p2 = line
+
+            t = midp - position
+            m.atan2(t.y, t.x) + m.pi
+        
+        
 
             
     def createOrderedQuad(self, v1, v2, v3, v4, v1Number, v2Number, v3Number, v4Number):
@@ -186,16 +228,11 @@ class Neuron:
         a3 = m.atan2(v3.y, v3.x) + m.pi
         a4 = m.atan2(v4.y, v4.x) + m.pi
 
-        lst = [[v1Number, a1],
-               [v2Number, a2],
-               [v3Number, a3],
-               [v4Number, a4]]
+        lst = [[v1Number, a1], [v2Number, a2], [v3Number, a3], [v4Number, a4]]
         
         sortedLst = sorted(lst, key=lambda element: element[1], reverse=self.clockwiseOrder)
-        face = [sortedLst[0][0],
-                sortedLst[1][0],
-                sortedLst[2][0],
-                sortedLst[3][0]]
+        
+        face = [sortedLst[0][0], sortedLst[1][0], sortedLst[2][0], sortedLst[3][0]]
         
         return face
 

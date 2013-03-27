@@ -21,7 +21,10 @@ class Vector:
 
     def distance(v1, v2):
         return ((v2.x-v1.x)**2.0 + (v2.y-v1.y)**2.0 + (v2.z-v1.z)**2.0)**0.5
-        
+
+    def copyVector(v1):
+        v2 = Vector(v1.x, v1.y, v1.z)
+        return v2
 
     def leftXYPerpendicular(v1):
         v2 = Vector()

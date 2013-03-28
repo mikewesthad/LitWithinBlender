@@ -24,12 +24,12 @@ class Neuron:
         self.farthestVertex     = self.center
 
         self.dendrites  = []
-        self.branchSplitProbability = 0.0
+        self.branchSplitProbability = 0.01
         self.branches               = 10
         self.dendriteThickness      = 5.0/micronsPerUnit
         self.minDendriteThickness   = 0.5/micronsPerUnit
-        self.stepSize               = 50.0/micronsPerUnit
-        self.headingRange           = 45
+        self.stepSize               = 10.0/micronsPerUnit
+        self.headingRange           = 15
         
         self.clockwiseOrder = False
         
@@ -99,13 +99,16 @@ class Neuron:
 
 
     def growDendrites(self):
-        finishedGrowing = True
+        
         for dendrite in self.dendrites:
             dendrite.grow()
-            if dendrite.isGrowing(): finishedGrowing = False
+            
+        self.branchDendrites()
 
-        if finishedGrowing: self.growing = False
-
+        self.growing = False
+        for dendrite in self.dendrites:
+            if dendrite.isGrowing(): self.growing = True
+            
     def buildNeuronMesh(self):
         for dendrite in self.dendrites:
             existingVertices    = len(self.vertices)

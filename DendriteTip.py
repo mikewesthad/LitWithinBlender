@@ -137,13 +137,16 @@ class DendriteTip:
             childHeading    = self.remap(childNumber, 0.0, numberChildren, startAngle, endAngle)
             childPosition   = self.p2.copyVector()  # Create a fresh copy for each child
             
-            childBranch = BranchTip(childHeaing, headingRange, stepSize,
-                                    childResorces, self.maxResources,
-                                    self.startThickness, self.endThickness,
-                                    childPosition, self.cellCenter, self.neuron)
+            childBranch = DendriteTip(childHeading, headingRange, stepSize,
+                                      childResources, self.maxResources,
+                                      self.startThickness, self.endThickness,
+                                      childPosition, self.cellCenter, self.neuron)
             
-            childBranch.v1 = self.v2.copyVector()
-            childBranch.v4 = self.v3.copyVector()
+            childBranch.v2 = self.v2.copyVector()
+            childBranch.v3 = self.v3.copyVector()
+            childBranch.p2 = self.p2.copyVector()
+            childBranch.vertices    = childBranch.vertices + [childBranch.v2] + [childBranch.v3]
+            childBranch.points      = childBranch.points + [childBranch.p2]
             childBranch.grow()
             
             children.append(childBranch)

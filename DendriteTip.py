@@ -11,7 +11,7 @@ from Vector import Vector
     # Don't forget to force heading into [0, 360]
 
 class DendriteTip:
-    def __init__(heading, headingRange, stepSize, resources, maxResources,
+    def __init__(self, heading, headingRange, stepSize, resources, maxResources,
                  startThickness, endThickness, startPosition,
                  cellCenter, neuron):
 
@@ -37,6 +37,7 @@ class DendriteTip:
         self.points     = []
         self.vertices   = []
 
+
     def isGrowing(self):
         return self.growing
 
@@ -47,17 +48,17 @@ class DendriteTip:
             if stepSize==None:      stepSize        = self.stepSize
 
             if self.p2 == None:
-                initializeGrowth(stepSize, heading, headingRange)
+                self.initializeGrowth(stepSize, heading, headingRange)
             else:
-                regularGrowth(stepSize, heading, headingRange)
+                self.regularGrowth(stepSize, heading, headingRange)
 
-    def initializeGrowth(self, stepSize, heading, headingRange):        
+    def initializeGrowth(self, stepSize, heading, headingRange):   
         self.p2     = Vector()
         self.p2.x   = m.cos(m.radians(heading)) * stepSize + self.p1.x
         self.p2.y   = m.sin(m.radians(heading)) * stepSize + self.p1.y
-        
-        thickness = (self.resources/self.maxResources) * (self.startThickness - self.endThickness) + self.endThickness
-        halfThickness = thickness / 2.0
+
+        thickness       = self.remap(self.resources, 0.0, self.maxResources, self.endThickness, self.startThickness)
+        halfThickness   = thickness / 2.0
 
         t           = self.p1 - self.cellCenter
         leftPerp    = t.leftXYPerpendicular().normalize()
@@ -71,7 +72,7 @@ class DendriteTip:
         self.v2     = leftPerp * halfThickness + self.p2
         self.v3     = rightPerp * halfThickness + self.p2
 
-        self.vertices   = self.vertices + [self.v1] + [self.v2] + [self.v3] + [self.v4]
+        self.vertices   = self.vertices + [self.v1] + [self.v4] + [self.v2] + [self.v3]
         self.points     = self.points + [self.p1] + [self.p2]
         
         self.resources -= stepSize
@@ -90,7 +91,7 @@ class DendriteTip:
         self.v3 = Vector()
         
         # Map the resources remaining into the range of thickness values to obtain the current thickness
-        thickness       = remap(self.resources, 0.0, self.maxResources, self.startThickness, self.endThickness)
+        thickness       = self.remap(self.resources, 0.0, self.maxResources, self.endThickness, self.startThickness)
         halfThickness   = thickness / 2.0
 
         # Generate a random heading
@@ -121,7 +122,7 @@ class DendriteTip:
         if headingRange==None:  headingRange    = self.headingRange
         if stepSize==None:      stepSize        = self.stepSize
 
-        if self.resources < stepSize * numberChildren: return
+        if self.resources < stepSize * numberChildren: return []
         
         self.growing    = False
         childResources  = self.resources/numberChildren
@@ -130,7 +131,7 @@ class DendriteTip:
         children        = []
                 
         for childNumber in range(numberChildren):
-            childHeading    = remap(childNumber, 0.0, numberChildren, startAngle, endAngle)
+            childHeading    = self.remap(childNumber, 0.0, numberChildren, startAngle, endAngle)
             childPosition   = self.p2.copyVector()  # Create a fresh copy for each child
             
             childBranch = BranchTip(childHeaing, headingRange, stepSize,
@@ -149,7 +150,7 @@ class DendriteTip:
             
         
     # Take a value (a) that has range [aMin, aMax] and remap it to the range [bMin, bMax]
-    def remap(a, aMin, aMax, bMin, bMax):        
+    def remap(self, a, aMin, aMax, bMin, bMax):        
         percent = float(a - aMin) / float(aMax - aMin)
         b       = percent * (bMax - bMin) + bMin
         return b

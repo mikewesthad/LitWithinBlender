@@ -27,7 +27,7 @@ class Network:
         self.position   = Vector(pos[0], pos[1], pos[2])
             
         # Create a light box
-        self.lightBox = LightBox(self.position, lightboxDimensions, micronsPerBlenderUnit)  
+##        self.lightBox = LightBox(self.position, lightboxDimensions, micronsPerBlenderUnit)  
 
         # Create a set of cells
         for i in range(numberCells):
@@ -44,11 +44,15 @@ class Network:
                 if c.growing:
                     c.growDendrites()
                     cellsDoneGrowing = False
+
+        for c in self.cells:
+            c.buildNeuronMesh()
+            
         for i in range(len(self.cells)):
-            cell = self.cells[i]
+            c = self.cells[i]
             name = "Neuron "+str(i)
-            verts = cell.verts
-            faces = cell.faces
+            verts = c.vertices
+            faces = c.faces
             self.buildMesh(name, verts, faces)
         
     def buildMesh(self, name, verts, faces):

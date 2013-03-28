@@ -53,6 +53,8 @@ class DendriteTip:
                 self.regularGrowth(stepSize, heading, headingRange)
 
     def initializeGrowth(self, stepSize, heading, headingRange):   
+        self.heading = heading
+        
         self.p2     = Vector()
         self.p2.x   = m.cos(m.radians(heading)) * stepSize + self.p1.x
         self.p2.y   = m.sin(m.radians(heading)) * stepSize + self.p1.y
@@ -96,6 +98,7 @@ class DendriteTip:
 
         # Generate a random heading
         heading += r.uniform(-self.headingRange, self.headingRange)
+        self.heading = heading
 
         # Find p2 by moving in the heading direction
         self.p2.x = self.p1.x + m.cos(m.radians(heading)) * stepSize
